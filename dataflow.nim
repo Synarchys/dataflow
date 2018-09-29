@@ -13,7 +13,7 @@ type
     id: string
     options: Table[string, string]
     documents: Table[string, T]
-    subscribers: seq[proc(d: DataContainer[T]){.nimcall.}]
+    subscribers: seq[proc(d: DataContainer[T])]
 
 proc createFlow*[T](id: string, options: Table[string, string]): DataFlow[T] =
   result = DataFlow[T](id: id, options: options)
@@ -33,7 +33,7 @@ proc `$`*[T](d:DataContainer[T]): string =
 proc callSubscribers[T](flow: DataFlow[T], d: DataContainer) =
   for cb in flow.subscribers:
     echo "running"
-    #cb(d)
+    cb(d)
     
 proc put*[T](flow: DataFlow[T], d: var DataContainer[T], cb: proc(d: DataContainer[T])) = 
   if flow.documents.hasKey(d.id):
@@ -56,7 +56,7 @@ proc seek*[T](flow: DataFlow[T], id: string, cb: proc(d: DataContainer[T])) =
     d.id = id
     d.code = 200
     d.message = "ok"
-    d.flowId: flow.id
+    d.flowId = flow.id
   else:
     d.error = true
     d.code =  404
@@ -77,7 +77,7 @@ proc evict*[T](flow: DataFlow[T], id: string, cb: proc(d: DataContainer[T])) =
     d.error = true
     d.code = 404
     d.message = "Document not found"
-    d.flowId: flow.id
+    d.flowId = flow.id
 
 proc subscribe*[T](flow: var DataFlow[T], cb: proc(d: DataContainer[T])) =
   #var d = DataContainer[T]()
