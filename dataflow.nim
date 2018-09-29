@@ -5,7 +5,7 @@ type
   DataContainer*[T] = ref object
     id*: string  
     flowId*: string
-    content*: T
+    contents*: T
     error*: bool
     code*: int
     message*: string
@@ -22,27 +22,35 @@ proc createFlow*[T](id: string, options: Table[string, string]): DataFlow[T] =
   
 proc `$`*[T](flow: DataFlow[T]): string =
   let typename = T.name
-  result = fmt"""FlowType: {typename}, ID: {flow.id}"""
-  #result.add("\n")
-  #implement options printing section
+  result = "FlowType: " & typename & ", ID: " & flow.id & ", Size: " & $flow.documents.len &
+    ", Subscribers: " & $flow.subscribers.len 
+  for k, v in flow.options.pairs:
+    result &= ", Options: [" & k & ": " & v & "]"
 
 proc `$`*[T](d:DataContainer[T]): string =
   let typename = T.name
-  result = fmt"DataType: {typename}, ID: {d.id}, Error: {d.error}, Code: {d.code}, Message: {d.message} Flow: {d.flowId} "
+  result = "DataType: " & typename & " ID: " & d.id & ", Error: " & $d.error & 
+    ", Code: " & $d.code & ", Message: " & d.message & ", Flow: " & d.flowId
+  var dresp = " Data: no data"
+  if d.contents != nil:
+    try:
+      dresp = " Data: " & $d.contents
+    except:
+      dresp = " Data: unprintable"
+  result &= dresp
 
 proc callSubscribers[T](flow: DataFlow[T], d: DataContainer) =
   for cb in flow.subscribers:
-    echo "running"
     cb(d)
     
 proc put*[T](flow: DataFlow[T], d: var DataContainer[T], cb: proc(d: DataContainer[T])) = 
   if flow.documents.hasKey(d.id):
-    flow.documents[d.id] = d.content
-    d.code =  0
+    flow.documents[d.id] = d.contents
+    d.code = 202
     d.message =  "changed"
     d.flowId = flow.id
   else:
-    flow.documents.add(d.id, d.content)
+    flow.documents.add(d.id, d.contents)
     d.code = 201
     d.message = "inserted"
     d.flowId = flow.id
@@ -52,7 +60,7 @@ proc put*[T](flow: DataFlow[T], d: var DataContainer[T], cb: proc(d: DataContain
 proc seek*[T](flow: DataFlow[T], id: string, cb: proc(d: DataContainer[T])) =
   var d = DataContainer[T]()
   if flow.documents.hasKey(id):
-    d.content = flow.documents[id]
+    d.contents = flow.documents[id]
     d.id = id
     d.code = 200
     d.message = "ok"
@@ -68,7 +76,7 @@ proc evict*[T](flow: DataFlow[T], id: string, cb: proc(d: DataContainer[T])) =
   var d = DataContainer[T](id:id)
   if flow.documents.hasKey(id):
     flow.documents.del(id)
-    d.code = 0
+    d.code = 200
     d. message = "deleted"
     d.id = id
     d.flowId = flow.id
