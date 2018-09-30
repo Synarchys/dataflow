@@ -90,7 +90,6 @@ proc evict*[T](flow: DataFlow[T], id: string, cb: proc(d: DataContainer[T])) =
   cb(d)
 
 proc subscribe*[T](flow: var DataFlow[T], cb: proc(d: DataContainer[T])) =
-  #var d = DataContainer[T]()
   flow.subscribers.add(cb)
     
     
