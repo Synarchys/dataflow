@@ -1,3 +1,6 @@
+
+import unittest
+
 import json, tables , sugar
 import dataflow
 

@@ -86,6 +86,8 @@ proc evict*[T](flow: DataFlow[T], id: string, cb: proc(d: DataContainer[T])) =
     d.code = 404
     d.message = "Document not found"
     d.flowId = flow.id
+  flow.callSubscribers(d)
+  cb(d)
 
 proc subscribe*[T](flow: var DataFlow[T], cb: proc(d: DataContainer[T])) =
   #var d = DataContainer[T]()
