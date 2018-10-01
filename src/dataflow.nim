@@ -15,26 +15,26 @@ type
     documents: Table[string, T]
     subscribers: seq[proc(d: DataContainer[T])]
 
-proc createFlow*[T](id: string, options: Table[string, string]): DataFlow[T] =
+proc createFlow*[T](id: string, options: Table[string, string] = initTable[string, string](1)): DataFlow[T] =
   result = DataFlow[T](id: id, options: options)
   result.documents = initTable[string, T]()
   result.subscribers = @[]
   
 proc `$`*[T](flow: DataFlow[T]): string =
   let typename = T.name
-  result = "FlowType: " & typename & ", ID: " & flow.id & ", Size: " & $flow.documents.len &
-    ", Subscribers: " & $flow.subscribers.len 
+  result = fmt"""FlowType: {typename}, ID: {flow.id}, Size: {$flow.documents.len}"""
+  result &= fmt""", Subscribers: {$flow.subscribers.len}""" 
   for k, v in flow.options.pairs:
-    result &= ", Options: [" & k & ": " & v & "]"
+    result &= fmt""", Options: [{k}: {v}]"""
 
 proc `$`*[T](d:DataContainer[T]): string =
   let typename = T.name
-  result = "DataType: " & typename & " ID: " & d.id & ", Error: " & $d.error & 
-    ", Code: " & $d.code & ", Message: " & d.message & ", Flow: " & d.flowId
-  var dresp = " Data: no data"
+  result = fmt"""DataType: {typename}, ID: {d.id}, Error: {$d.error}"""
+  result &= fmt""", Code: {$d.code}, Message: {d.message}, Flow: d.flowId"""
+  var dresp = " Data: no data" 
   if d.contents != nil:
     try:
-      dresp = " Data: " & $d.contents
+      dresp = fmt""" Data: {$d.contents}"""
     except:
       dresp = " Data: unprintable"
   result &= dresp

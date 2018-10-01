@@ -5,7 +5,11 @@ import json, tables , sugar
 import dataflow
 
 var df = createFlow[JsonNode]("myFlow", {"option1": "value1"}.toTable)
+var stringFlow = createFlow[string]("stringFlow")
+
 echo $df
+echo $stringFlow
+
 var d = DataContainer[JsonNode](id: "1", contents: %*{"name": "asdqwe"})
 
 proc changes(d: DataContainer[JsonNode]){.nimcall.} =
