@@ -1,5 +1,7 @@
 # imu dataflow manager
 import json, tables, strformat, typetraits
+import uuids # https://github.com/pragmagic/uuids
+
 
 type
   DataContainer*[T] = ref object
@@ -13,12 +15,12 @@ type
     id: string
     options: Table[string, string]
     documents: Table[string, T]
-    subscribers: seq[proc(d: DataContainer[T])]
+    subscribers: Table[string,proc(d: DataContainer[T])]
 
-proc createFlow*[T](id: string, options: Table[string, string] = initTable[string, string](1)): DataFlow[T] =
+proc createFlow*[T](id: string, options: Table[string, string] = initTable[string, string]()): DataFlow[T] =
   result = DataFlow[T](id: id, options: options)
   result.documents = initTable[string, T]()
-  result.subscribers = @[]
+  result.subscribers = initTable[string,proc(d: DataContainer[T])]()
   
 proc `$`*[T](flow: DataFlow[T]): string =
   let typename = T.name
@@ -40,7 +42,7 @@ proc `$`*[T](d:DataContainer[T]): string =
   result &= dresp
 
 proc callSubscribers[T](flow: DataFlow[T], d: DataContainer) =
-  for cb in flow.subscribers:
+  for id, cb in flow.subscribers.pairs:
     cb(d)
     
 proc put*[T](flow: DataFlow[T], d: var DataContainer[T], cb: proc(d: DataContainer[T])) = 
@@ -89,8 +91,14 @@ proc evict*[T](flow: DataFlow[T], id: string, cb: proc(d: DataContainer[T])) =
   flow.callSubscribers(d)
   cb(d)
 
-proc subscribe*[T](flow: var DataFlow[T], cb: proc(d: DataContainer[T])) =
-  flow.subscribers.add(cb)
-    
+proc subscribe*[T](flow: var DataFlow[T], cb: proc(d: DataContainer[T])): string  =
+  result = $genUUID()
+  flow.subscribers.add(result, cb)
+
+proc unsubscribe*[T](flow: var DataFlow[T], id: string): string =
+  if flow.subscribers.hasKey(id):
+    flow.subscribers.del(id)
+    return "ok"
+  return "not found"
     
   
