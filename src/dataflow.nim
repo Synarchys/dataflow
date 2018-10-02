@@ -1,6 +1,23 @@
 # imu dataflow manager
 import json, tables, strformat, typetraits
-import uuids # https://github.com/pragmagic/uuids
+
+when defined(js):
+  proc genUUID*(): string =
+    result = ""
+    proc random(): float {.importc: "Math.random".}
+    proc floor(n: float): int8 {.importcpp: "Math.floor(#)".} 
+    for i in 0..36:
+      const adigits = "0123456789abcdef"
+      case i:
+        of 8, 13, 18, 23:
+          result &= "-"
+        of 14:
+          result &= "4"
+        else:
+          var r = random() * 16
+          result &= adigits[floor(r)]  
+else:
+  import uuids # https://github.com/pragmagic/uuids
 
 
 type
@@ -15,7 +32,7 @@ type
     id: string
     options: Table[string, string]
     documents: Table[string, T]
-    subscribers: Table[string,proc(d: DataContainer[T])]
+    subscribers: Table[string, proc(d: DataContainer[T])]
 
 proc createFlow*[T](id: string, options: Table[string, string] = initTable[string, string]()): DataFlow[T] =
   result = DataFlow[T](id: id, options: options)
