@@ -55,8 +55,18 @@ proc `$`*[T](d:DataContainer[T]): string =
 proc callSubscribers[T](flow: DataFlow[T], d: DataContainer) =
   for id, cb in flow.subscribers.pairs:
     cb(d)
-    
-proc send*[T](flow: DataFlow[T], d: var DataContainer[T], cb: proc(d: DataContainer[T])) = 
+
+proc subscribe*[T](flow: var DataFlow[T], cb: proc(d: DataContainer[T])): string  =
+  result = $genUUID()
+  flow.subscribers.add(result, cb)
+
+proc unsubscribe*[T](flow: var DataFlow[T], id: string): string =
+  if flow.subscribers.hasKey(id):
+    flow.subscribers.del(id)
+    return "ok"
+  return "not found"
+  
+proc send*[T](flow: DataFlow[T], d: DataContainer[T], cb: proc(d: DataContainer[T])) = 
   if flow.documents.hasKey(d.id):
     flow.documents[d.id] = d.contents
     d.code = 202
@@ -69,6 +79,11 @@ proc send*[T](flow: DataFlow[T], d: var DataContainer[T], cb: proc(d: DataContai
     d.flowId = flow.id
   flow.callSubscribers(d)
   cb(d)
+
+proc sendData*[T](f:DataFlow[T], d: T, cb: proc(dd: T)) =
+  var dc = createContainer[T](d)
+  f.send(dc, proc(dcc: DataContainer[T]) =
+               cb(dcc.contents))
   
 proc seek*[T](flow: DataFlow[T], id: string, cb: proc(d: DataContainer[T])) =
   var d = DataContainer[T]()
@@ -102,19 +117,3 @@ proc evict*[T](flow: DataFlow[T], id: string, cb: proc(d: DataContainer[T])) =
   flow.callSubscribers(d)
   cb(d)
 
-proc subscribe*[T](flow: var DataFlow[T], cb: proc(d: DataContainer[T])): string  =
-  result = $genUUID()
-  flow.subscribers.add(result, cb)
-
-proc unsubscribe*[T](flow: var DataFlow[T], id: string): string =
-  if flow.subscribers.hasKey(id):
-    flow.subscribers.del(id)
-    return "ok"
-  return "not found"
-    
-  
-proc sendData*[T](f:DataFlow[T], d: T, cb: proc(dd: T)) =
-  var dc = createContainer[T](d)
-  f.send(dc, proc(dcc: DataContainer[T]) =
-               cb(dcc.contents)
-  )
