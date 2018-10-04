@@ -1,5 +1,5 @@
 # imu dataflow manager
-import json, tables, strformat, typetraits
+import json, tables, strformat, typetraits, times
 
 when defined(js):
   import uuidjs
@@ -7,8 +7,10 @@ when defined(js):
 else:
   import uuids # https://github.com/pragmagic/uuids
 
+export genUUID
 
 type
+  FlowOptions* = Table[string, string]
   DataContainer*[T] = ref object
     id*: string  
     flowId*: string
@@ -26,6 +28,10 @@ proc createFlow*[T](id: string, options: Table[string, string] = initTable[strin
   result = DataFlow[T](id: id, options: options)
   result.documents = initTable[string, T]()
   result.subscribers = initTable[string,proc(d: DataContainer[T])]()
+
+proc createContainer*[T](d: T): DataContainer[T] =
+  result = DataContainer[T](contents: d)
+  result.id = $genUUID()
   
 proc `$`*[T](flow: DataFlow[T]): string =
   let typename = T.name
@@ -50,7 +56,7 @@ proc callSubscribers[T](flow: DataFlow[T], d: DataContainer) =
   for id, cb in flow.subscribers.pairs:
     cb(d)
     
-proc put*[T](flow: DataFlow[T], d: var DataContainer[T], cb: proc(d: DataContainer[T])) = 
+proc send*[T](flow: DataFlow[T], d: var DataContainer[T], cb: proc(d: DataContainer[T])) = 
   if flow.documents.hasKey(d.id):
     flow.documents[d.id] = d.contents
     d.code = 202
@@ -107,3 +113,8 @@ proc unsubscribe*[T](flow: var DataFlow[T], id: string): string =
   return "not found"
     
   
+proc sendData*[T](f:DataFlow[T], d: T, cb: proc(dd: T)) =
+  var dc = createContainer[T](d)
+  f.send(dc, proc(dcc: DataContainer[T]) =
+               cb(dcc.contents)
+  )

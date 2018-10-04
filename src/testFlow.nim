@@ -4,9 +4,16 @@ import unittest
 import json, tables , sugar
 import dataflow
 
-var df = createFlow[JsonNode]("myFlow", {"option1": "value1"}.toTable)
-var stringFlow = createFlow[string]("stringFlow")
+type mytype = object
+  afield: string
+  another: bool
+  andsomething: JsonNode 
 
+var df = createFlow[JsonNode]($genUUID(), {"option1": "value1"}.toTable)
+var stringFlow = createFlow[string]("stringFlow")
+var kk = createFlow[mytype]("mytypeflow")
+
+echo $kk
 echo $df
 echo $stringFlow
 
@@ -19,7 +26,7 @@ let subsID = df.subscribe(changes)
 
 echo "Subscriber ID: " & subsID
 
-df.put(d, proc(d: DataContainer[JsonNode]) = echo $d)
+df.send(d, proc(d: DataContainer[JsonNode]) = echo $d)
 df.seek("1", proc(e:DataContainer[JsonNode]) =
   echo $e
 )
