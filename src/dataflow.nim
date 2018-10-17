@@ -32,7 +32,16 @@ proc createFlow*[T](id: string, options: Table[string, string] = initTable[strin
 proc createContainer*[T](d: T): DataContainer[T] =
   result = DataContainer[T](contents: d)
   result.id = $genUUID()
-  
+
+proc toJson*[T](d: DataContainer[T]): JsonNode =
+  result = %*{"id": d.id,
+               "flowId": d.flowId,
+               "error": d.error,
+               "code": d.code,
+               "message": d.message}
+  if d.contenct != nil:  
+    result["contents"] = d.contents.toJson()
+             
 proc `$`*[T](flow: DataFlow[T]): string =
   let typename = T.name
   result = fmt"""FlowType: {typename}, ID: {flow.id}, Size: {$flow.documents.len}"""
@@ -40,7 +49,7 @@ proc `$`*[T](flow: DataFlow[T]): string =
   for k, v in flow.options.pairs:
     result &= fmt""", Options: [{k}: {v}]"""
 
-proc `$`*[T](d:DataContainer[T]): string =
+proc `$`*[T](d: DataContainer[T]): string =
   let typename = T.name
   result = fmt"""DataType: {typename}, ID: {d.id}, Error: {$d.error}"""
   result &= fmt""", Code: {$d.code}, Message: {d.message}, Flow: d.flowId"""
