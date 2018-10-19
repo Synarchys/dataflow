@@ -1,7 +1,7 @@
 # imu dataflow manager
 import json, times, tables, strformat
 
-import ./dataflow
+#import ./dataflow
 
 when defined(js):
   import uuidjs
