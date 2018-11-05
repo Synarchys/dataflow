@@ -46,30 +46,25 @@ proc ajax*(meth, url: cstring; headers: openarray[(cstring, cstring)];
 
 proc ajaxPost*(url: cstring; headers: openarray[(cstring, cstring)];
           data: cstring;
-          cont: proc (httpStatus: int, response: cstring);
-          doRedraw: bool = true) =
+          cont: proc (httpStatus: int, response: cstring)) =
   ajax("POST", url, headers, data, cont)
 
 proc ajaxPost*(url: cstring; headers: openarray[(cstring, cstring)];
           data: Blob;
-          cont: proc (httpStatus: int, response: cstring);
-          doRedraw: bool = true) =
+          cont: proc (httpStatus: int, response: cstring)) =
   ajax("POST", url, headers, "", cont, true, data)
 
 proc ajaxGet*(url: cstring; headers: openarray[(cstring, cstring)];
-          cont: proc (httpStatus: int, response: cstring);
-          doRedraw: bool = true) =
+          cont: proc (httpStatus: int, response: cstring)) =
   ajax("GET", url, headers, nil, cont)
 
 proc ajaxPut*(url: cstring; headers: openarray[(cstring, cstring)];
           data: cstring;
-          cont: proc (httpStatus: int, response: cstring);
-          doRedraw: bool = true) =
+          cont: proc (httpStatus: int, response: cstring)) =
   ajax("PUT", url, headers, data, cont)
 
 proc ajaxDelete*(url: cstring; headers: openarray[(cstring, cstring)];
-          cont: proc (httpStatus: int, response: cstring);
-          doRedraw: bool = true) =
+          cont: proc (httpStatus: int, response: cstring)) =
   ajax("DELETE", url, headers, nil, cont)
 
 
