@@ -1,7 +1,13 @@
 # imu dataflow manager
-import json, times, tables, strformat
+## Json dataFlow
+## This module implements a Obserer/Observable patern for data transmition
+## and application state.
+## It wors on the javascript and native targets.
+## It mantains a table of documents indexed by id whiche can be inserted,
+## modified or deleted.
+## When there is a change all subscribers will be called.
 
-#import ./dataflow
+import json, times, tables, strformat
 
 when defined(js):
   import uuidjs
@@ -11,12 +17,17 @@ else:
 
 type
   JsonFlow = ref object
+    ## The Flow needs an id which generally is an UUID but can be any valid string
     id: string
     options: Table[string, string]
     documents: Table[string, JsonNode]
     subscribers: Table[string, proc(d: JsonNode)]
   
-proc createFlow*(id: string, options: Table[string, string] = initTable[string, string]()): JsonFlow =
+proc createFlow*(id: string,
+                 options: Table[string, string] = initTable[string, string]()
+                ): JsonFlow =
+  ## Creates a new flow given an ID and a table of options.
+  ## the options  
   result = JsonFlow(id: id, options: options)
   result.documents = initTable[string, JsonNode]()
   result.subscribers = initTable[string, proc(d: JsonNode)]()
@@ -40,8 +51,11 @@ proc unsubscribe*(flow: var JsonFlow, id: string): string =
     flow.subscribers.del(id)
     return "ok"
   return "not found"
+
+proc default_cb(r: JsonNode) =
+  discard
   
-proc send*(flow: JsonFlow, d: JsonNode, cb: proc(d: JsonNode)) = 
+proc send*(flow: JsonFlow, d: JsonNode, cb: proc(d: JsonNode) = default_cb) = 
   if flow.documents.hasKey(d["id"].getStr()):
     flow.documents[d["id"].getStr()] = d
     d["code"] = %202
