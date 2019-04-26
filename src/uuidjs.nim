@@ -4,8 +4,8 @@ import jsffi
 proc genUUID*(): string =
   result = ""
   proc random(): float {.importc: "Math.random".}
-  proc floor(n: float): int8 {.importcpp: "Math.floor(#)".} 
-  for i in 0..36:
+  proc floor(n: float): int8 {.importcpp: "Math.floor(#)".}
+  for i in 0..35:
     const adigits = "0123456789abcdef"
     case i:
       of 8, 13, 18, 23:
